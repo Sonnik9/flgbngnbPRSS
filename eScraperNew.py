@@ -13,6 +13,7 @@ import re
 import multiprocessing
 from fake_useragent import UserAgent
 from datetime import datetime
+import sys
 start_time = time.time()
 hrefsBankVar = []
 uagent = UserAgent()
@@ -74,6 +75,7 @@ aceptLengv = [
 # ////////////////////////////////////
 
 def random_headers(argLink):
+    
     device_memoryHelper = [2,4,8,16,32]
     sett = set()
     finHeaders = []
@@ -121,35 +123,39 @@ def proxyGenerator():
 def sessionReq(url1, shopArg):
     session = HTMLSession()
     session.trust_env = False    
-    r = session.get(url1, headers=random_headers(shopArg), timeout=(9, 27), proxies=proxyGenerator())
+    # r = session.get(url1, headers=random_headers(shopArg), timeout=(29, 57), proxies=proxyGenerator())
+    r = session.get(url1, headers=random_headers(shopArg), timeout=(29, 77))
     return r
 
-def paginationReply(url3):    
+def paginationReply(url2): 
+    # paginController = 0   
     lastPagin = 0
     agrForEbey = 'ebay.com' 
     print('Старт...')      
     try:
-        r = sessionReq(url3, agrForEbey)          
-        print(r)
-        if r == '<Response [503]>':
+        r = sessionReq(url2, agrForEbey)          
+        # print(r)
+        if str(r) == '<Response [200]>':
+            print('Первый ответ сервера положительный')
+        if str(r) == '<Response [503]>':
             try:
                 time.sleep(random.randrange(31,37))
-                r = sessionReq(url3, agrForEbey)
+                r = sessionReq(url2, agrForEbey)
             except:
                 pass
-        if r == '<Response [403]>':
+        if str(r) == '<Response [403]>':
             try:
                 time.sleep(random.randrange(69,87))
-                r = sessionReq(url3, agrForEbey)
+                r = sessionReq(url2, agrForEbey)
             except:
                 pass
-        if r == '<Response [504]>':
+        if str(r) == '<Response [504]>':
             return  
-        if r == '<Response [404]>':
+        if str(r) == '<Response [404]>':
             return 
-        if r == '<Response [400]>':
+        if str(r) == '<Response [400]>':
             return 
-        if r == '<Response [443]>':
+        if str(r) == '<Response [443]>':
             return          
             
         soup = BeautifulSoup(r.text, "lxml") 
@@ -161,12 +167,21 @@ def paginationReply(url3):
         except Exception as ex:            
             print(ex)
                   
-        print(lastPagin)
+        print(f"Количество страниц пагинации: {lastPagin}")
             # print('exPagin and sec req')           
     except Exception as ex:  
         print(f"pagin:  {ex}")
-    # try:
-    gather_Registrtor_Ebay(lastPagin)
+        # paginController +=1
+        # if paginController >1:
+        #     print('Упс! Что-то пошло не так')
+        #     return
+        # else:
+        #     paginationReply(url2)
+    finally:
+        try:
+            gather_Registrtor_Ebay(lastPagin)
+        except:
+            return
     # except Exception as ex:
     #     print(f"problem gather registor, error: {ex}")
         
@@ -183,25 +198,25 @@ def linkerCapturerEbay(itemsCount):
         linkk = f'{ur}&_ipg=240&_pgn={itemsCount+1}'
         r = sessionReq(linkk, agrForEbey)
         # print(f"linker response:  {r}") 
-        if r == '<Response [503]>':
+        if str(r) == '<Response [503]>':
             try:
                 time.sleep(random.randrange(31,37))
                 return
             except:
                 pass
-        if r == '<Response [403]>':
+        if str(r) == '<Response [403]>':
             try:
                 time.sleep(random.randrange(61,87))
                 return
             except:
                 pass
-        if r == '<Response [504]>':
+        if str(r) == '<Response [504]>':
             return  
-        if r == '<Response [404]>':
+        if str(r) == '<Response [404]>':
             return
-        if r == '<Response [400]>':
+        if str(r) == '<Response [400]>':
             return
-        if r == '<Response [443]>':
+        if str(r) == '<Response [443]>':
             return
                        
         try:
@@ -213,18 +228,22 @@ def linkerCapturerEbay(itemsCount):
                 else:
                     hrefsBankVar.append(item.get('href'))     
 
-                if i % 40 == 0:                    
-                    time.slep(random.randrange(2,7))                 
-                if i % 120 == 0:                    
-                    time.slep(random.randrange(28,35))                
+                # if i % 40 == 0:                    
+                #     time.slep(random.randrange(2,7))                 
+                # if i % 120 == 0:                    
+                #     time.slep(random.randrange(28,35))                
             # print(hrefsBankVar)            
 
         except:
             print(f'исключение на 226 стр') 
             return 
     except Exception as ex:
-         print(f"linker capturer:  {ex}")        
-    return hrefsBankVar
+         print(f"linker capturer:  {ex}") 
+    finally: 
+        try:      
+           return hrefsBankVar
+        except:
+           return
 
 # //////////////////////////////////////////////////////////////////
 
@@ -232,33 +251,34 @@ def hendlerLinks(link):
     result = []
     upc = ''
     agrForEbey = 'ebay.com'        
-    dNotApl = 'Does not Apply'
-    notAv = 'Not Available'
-    print('start handler')
+    dNotApl = 'does not apply'
+    notAv = 'not available'
+    # print('start handler')
 
     try:            
         r = sessionReq(link, agrForEbey)          
         # print(f"ответ обработчика ссілок Ебей:  {r}")
-        if r == '<Response [503]>':
+        if str(r) == '<Response [503]>':
             try:
                 time.sleep(random.randrange(31,37))
                 return
             except:
                 pass
-        if r == '<Response [403]>':
+        if str(r) == '<Response [403]>':
             try:
                 time.sleep(random.randrange(61,87))
                 return
             except:
                 pass
-        if r == '<Response [504]>':
+        if str(r) == '<Response [504]>':
             return  
-        if r == '<Response [404]>':
+        if str(r) == '<Response [404]>':
             return 
-        if r == '<Response [400]>':
+        if str(r) == '<Response [400]>':
             return 
-        if r == '<Response [443]>':
+        if str(r) == '<Response [443]>':
             return
+
                         
         soup = BeautifulSoup(r.text, "lxml")           
         priceChecer = soup.find('div', class_='x-price-primary').find('span', class_='ux-textspans').get_text().strip()
@@ -305,13 +325,18 @@ def hendlerLinks(link):
         except:                       
             try:
                 CompatibleBrand = soup.find_all('div', class_='ux-layout-section__row')
-                cpBrd = 'Compatible Brand'     
+                cpBrd = 'compatible brand'     
 
                 for row in CompatibleBrand:
                     section = row.find_all('span', class_='ux-textspans')
-                    for j, compBrand in enumerate(section):                    
-                        try:         
-                            match = re.search(f'{r}"{cpBrd}"', section[j].get_text().strip())
+                    for j, compBrand in enumerate(section):                                        
+                        try:
+                            try:
+                                sec = (f"{section[j].get_text().strip()}").lower() 
+                            except:
+                                sec = section[j].get_text().strip()
+                                         
+                            match = re.search(f'{r}"{cpBrd}"', sec)
                             if match:
                                 brand = section[j+1].get_text().strip() 
                                 break 
@@ -354,9 +379,13 @@ def hendlerLinks(link):
             else:
                 pass                
         except:
-               pass            
+               pass 
+        try:
+            mod = model.lower()            
+        except:
+            pass                     
 
-        if model == '' or model.lower() == dNotApl.lower() or model.lower() == notAv.lower():
+        if model == '' or mod == dNotApl or mod == notAv:
            model = ''  
 
         # ////////////////////////////////////////////////////////////////////////// upc
@@ -367,13 +396,19 @@ def hendlerLinks(link):
         except Exception as ex:          
             try:   
                 upc = soup.find_all('div', class_='ux-layout-section__row')
-                upcUpc = 'UPC'
+                upcUpc = 'upc'
                 # upcUpc = upcUpc.lower()
                 for row in upc:
                     section = row.find_all('span', class_='ux-textspans')
-                    for j, upcc in enumerate(section):                    
-                        try:         
-                            match = re.search(f'{r}"{upcUpc}"', section[j].get_text().strip())
+                    for j, upcc in enumerate(section):
+                                            
+                        try:
+                            try: 
+                               ses = (f"{section[j].get_text().strip()}").lower()
+                            except:
+                                ses = section[j].get_text().strip()
+                                       
+                            match = re.search(f'{r}"{upcUpc}"', ses)
                             if match:
                                 upc = section[j+1].get_text().strip()                               
                                 break
@@ -381,9 +416,12 @@ def hendlerLinks(link):
                             continue
             except:
                 upc = ''                                                                    
-
-        
-        if upc == '' or upc.lower() == dNotApl.lower() or upc.lower() == notAv.lower():
+        try:
+            up = upc.lower()            
+        except:
+            pass
+ 
+        if upc == '' or up == dNotApl or up == notAv:
             upc = ''
         else:
             try:
@@ -427,34 +465,38 @@ def hendlerLinks(link):
         })  
                 
     except Exception as ex:
-        print(f" error str 440:  {ex}")
-        # return      
-    try:        
-        return result[0]
-    except:
-        return
+        print(f" error str 443:  {ex}")
+        return      
+    finally:
+        try:        
+           return result[0]
+        except:
+            return
+
 # //////////////////////////////////////////////////////////////////////
 
 def gather_Registrtor_Ebay(lastPagin):
+    hrefss = []
     if lastPagin > 5:
         n = 4
         # lastPagin = 3
     else:
         n = lastPagin    
-    with multiprocessing.Pool(multiprocessing.cpu_count() * 3) as p:
+    with multiprocessing.Pool(multiprocessing.cpu_count() * 3) as p1:
         
-        hrefsBank = p.map(linkerCapturerEbay, list(range(lastPagin)))
-        print('hahaha')
-        # p.close()
-        # p.join()
-    hrefss = []
+        hrefsBank = p1.map(linkerCapturerEbay, list(range(lastPagin)))
+        # print('hahaha')
+        # p1.close()
+        # p1.terminate()
+        # p1.join()  
+    
     for c in hrefsBank:            
         if c is None:
             continue 
         else:
             hrefss += c
-            
-    print(f"gager registor ok len finish list: {len(hrefss)}")        
+    hrefsBank = []            
+    print(f"Количество ссылок для обработки: {len(hrefss)}")        
     gather_Linker_Ebay(hrefss)
 
 
@@ -462,218 +504,287 @@ def gather_Registrtor_Ebay(lastPagin):
 
 def gather_Linker_Ebay(hrefsBank):
     # print('linker ebay')
+    resNew = []
     
-    with multiprocessing.Pool(multiprocessing.cpu_count() * 4) as p:        
-        res = p.map(hendlerLinks, hrefsBank[24:69])
-        # p.close()
-        # p.join()
-        resNew = []
-           
+    with multiprocessing.Pool(multiprocessing.cpu_count() * 3) as p2:        
+        res = p2.map(hendlerLinks, hrefsBank[11:21])
+        # p2.close()
+        # p2.terminate()
+        # p2.join() 
     for c in res:                
         if c is None:
             continue
         else:
             resNew.append(c)
-    print(f"total links for parsing:  {len(resNew)}")
+    res = []
+    print(f"Количество ссылок для парсинга:  {len(resNew)}")
     # print('linker ebay okey')
     gather_Linker_Amazon(resNew)
         
 # /////////////////////////////////////////////////////////
 # amazon start
+
+
 def gather_Linker_Amazon(resNew):
     print('gather Amazon')
+    total2 = []
 
-    with multiprocessing.Pool(multiprocessing.cpu_count() * 3) as p:       
-        total = p.map(linksHandlerAmazon, resNew)
-    total2 = []       
+    with multiprocessing.Pool(multiprocessing.cpu_count() * 3) as p3:       
+        total = p3.map(linksHandlerAmazon, resNew)
+        p3.close()
+        p3.terminate()
+        p3.join()   
     for c in total:                
         if c is None:
             continue
         else:
             total2.append(c)            
-  
+    total = []
     print('gager amazon ok')              
-    # print(total2)    
+    print(f"str 509: {len(total2)}")   
     writerr(total2)        
 
 def linksHandlerAmazon(total):
-    print('start Amazon')
+    # print('start Amazon')
     finResult = []
-    resultProto = [] 
-    agrForAmazon = 'amazon.com'     
-    sessController = 0
-        
-    while(True):   
-        resultProto = []
-        targetLinkPattern = 'https://www.amazon.com'
-        flagEx1 = False               
-        targetLink = ''
-        targetPrice  = ''
-        asin = '' 
-        quanityTargetItems = 0
-        url = total["linkSrchAmazon"].replace(' ', '+')
-        if url =='':
-            return
-        # print(f"url For Amazon: {url}")
-        try:   
-           r = sessionReq(url, agrForAmazon)
-        #    print(f"ответ Амазона:  {r}")
-           if r == '<Response [503]>':
-                try:
-                    time.sleep(random.randrange(31,37))
-                    return
-                except:
-                    pass
-           if r == '<Response [403]>':
-                try:
-                    time.sleep(random.randrange(61,87))
-                    return
-                except:
-                    pass
-           if r == '<Response [504]>':
-                return  
-           if r == '<Response [404]>':
-                return 
-           if r == '<Response [400]>':
-                return  
-           if r == '<Response [443]>':
-                return 
-        except Exception as ex:
-            print(ex)          
-        
-        soup = BeautifulSoup(r.content, "html.parser")
-        soup2 = BeautifulSoup(r.text, "lxml")
-        dom = etree.HTML(str(soup)) 
-        try:                   
-            gf = dom.xpath('//*[@id="search"]/span/div/h1/div/div[1]/div/div/span[1]//text()')[0] 
-            # print(gf)           
-            try:    
-                quanityTargetItems = int(gf)
-            except: 
-                qaArr = gf.split(' ')
-                for it in qaArr:
-                    try:                
-                        quanityTargetItems = int(it)                     
-                    except:
-                        continue
-            # print(quanityTargetItems)
-            # print(f"quanityTargetItems: {quanityTargetItems}")
-        except Exception as ex:
-            sessController +=1
-            # print(f"sessionController {sessController}")                
-            # time.sleep(random.randrange(12, 28))
-            if sessController > 1:
+    brand = total['brand'].lower()    
+    agrForAmazon = 'amazon.com'
+    case = 0        
+    # while(True):   
+          
+    quanityTargetItems = 0
+    flagEx1 = False
+    targetLinkPattern = 'https://www.amazon.com'        
+    if total['linkSrchAmazon'] == '':
+        return
+    # print(f"url For Amazon: {url}")
+    try:   
+        r = sessionReq(total['linkSrchAmazon'], agrForAmazon)
+        # print(f"ответ Амазона:  {r}")
+        if str(r) == '<Response [503]>':
+            print('Желтая карточка от сервера')
+            try:
+                time.sleep(random.randrange(31,37))
                 return
-            else:
-                # print(ex)
-                time.sleep(random.randrange(1, 3))
-                continue
-        sessController = 0        
-        # print(quanityTargetItems)
-        if quanityTargetItems > 10:
-            quanityTargetItems = random.randrange(4,8)
-        
+            except:
+                pass
+        if str(r) == '<Response [403]>':
+            print('Сервер отверг запрос')
+            try:
+                time.sleep(random.randrange(61,87))
+                return
+            except:
+                pass
+        if str(r) == '<Response [504]>':
+            return  
+        if str(r) == '<Response [404]>':
+            print('Страница не найдена')
+            return 
+        if str(r) == '<Response [400]>':
+            return  
+        if str(r) == '<Response [443]>':
+            print('Проблемы с подключениемю. Проверьте интернет соединение')
+            return 
+    except Exception as ex:
+        pass
+
+    soup = BeautifulSoup(r.content, "html.parser")
+    soup2 = BeautifulSoup(r.text, "lxml")
+    dom = etree.HTML(str(soup)) 
+    try:                   
+        gf = dom.xpath('//*[@id="search"]/span/div/h1/div/div[1]/div/div/span[1]//text()')[0] 
+        # print(gf)            
+        try:    
+            quanityTargetItems = int(gf)
+        except:
+            try:
+                quanityTargetItems = int(gf.split(' ')[0])
+            except:                                     
+                try:                
+                    quanityTargetItems = int(gf.split(' ')[0].split('-')[1])                                           
+                except Exception as ex:
+                    print(f"что-то не так с quanityTargetItems Amazon{ex}")
+                    pass
+    # print(quanityTargetItems)
+    
+    except Exception as ex:
+        return
+
+    
+    if quanityTargetItems > 10:
+        quanityTargetItems = 10
+            
+    try: 
         try:
-            for i in range(quanityTargetItems): 
+            resultProto = [] 
+            case = 1                            
+            for i in range(quanityTargetItems):
+                targetLinkPattern = 'https://www.amazon.com'                     
+                targetLink = ''
+                targetPrice  = ''
+                titleCritery = ''
+                asin = '' 
                 if i == 0:
                     try:
-                        try:                            
-                            targetLink = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[3]/div/div/div/div/div/div[2]/div/div/div[3]/div[1]/div/div[1]/div/a[1]')[0].get('href')
+                        try:
+                            targetLink = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[3]/div/div/div/div/div[3]/div[3]/div/a')[0].get('href')                        
                             # print(targetLink)
                         except Exception as ex:
                             pass
                             # print(ex)
-                            # pass
-                        try:                            
-                            targetPrice = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[3]/div/div/div/div/div/div[2]/div/div/div[3]/div[1]/div/div[1]/div/a/span[1]/span[1]//text()')[0]
-                            # print(targetPrice)
+                        try:
+                            titleCritery = eval(str(dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[3]/div/div/div/div/div[3]/div[1]/h2/a/span//text()')))[0]
+                            # print(titleCritery)
+                        
                         except Exception as ex:
                             pass
-                            # print(ex)
-                        
+                            # print(f"titleCritery ex: {ex}")
                         try:
+                            targetPrice = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[3]/div/div/div/div/div[3]/div[3]/div/a/span//text()')[0]
+
+                            # print(targetPrice)
+                        except:
+                            pass 
+                        try:                           
                             asinArr = targetLink.split('/')                           
                             
                             for i, a in enumerate(asinArr):
                                 if asinArr[i] == 'dp':
                                     asin = asinArr[i+1]
-                            try: 
-                                int(str(asin)[1])
-                                flagEx1 = False
-                            except:
-                                flagEx1 = True 
-                        except Exception as ex:
-                            # print(ex)
-                            asin = ''                      
-                        resultProto.append({
-                            "targetLink": str(f"{targetLinkPattern}{targetLink}").strip(),
-                            "targetPrice": str(targetPrice).strip(),
-                            "asin": str(asin).strip()
-                        })
-                        if len(resultProto) == int(quanityTargetItems):
-                            flagEx1 = False
-                            break
-                    
-                    except Exception as ex:
-                        # print(f"first stap{ex}")
-                        flagEx1 = True
-                        break
-                else:
-                    try:
-                        try:                            
-                            targetLink = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+3}]/div/div/div/div/div/div[2]/div/div/div[3]/div[1]/div/div[1]/div/a[1]')[0].get('href')
-                            # print(targetLink)
                         except:
                             pass
-                        try:                                                 
-                            targetPrice = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+3}]/div/div/div/div/div/div[2]/div/div/div[3]/div[1]/div/div[1]/div/a/span/span[1]//text()')[0]
-                            # print(targetPrice)
-                            asinArr = targetLink.split('/')
-                        except:
-                            pass
-                        for i, a in enumerate(asinArr):
-                            if asinArr[i] == 'dp':
-                                asin = asinArr[i+1]
                         
                         resultProto.append({
                             "targetLink": str(f"{targetLinkPattern}{targetLink}").strip(),
+                            "titleCritery": str(titleCritery).strip(),
                             "targetPrice": str(targetPrice).strip(),
                             "asin": str(asin).strip()
                         })
-                        if len(resultProto) == int(quanityTargetItems):
-                            flagEx1 = False
+
+                    except Exception as ex:
+                        pass
+
+                else:                        
+                    try:
+                        try:
+                            targetLink = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+3}]/div/div/div/div/div[2]/div[3]/div/a')[0].get('href')
+                            # print(f"str 272: {targetLink}")
+                        except:
+                            pass
+                        try:
+                            titleCritery = eval(str(dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+3}]/div/div/div/div/div[2]/div[1]/h2/a/span//text()')))[0]
+                            # print(titleCritery)
+                        
+                        except Exception as ex:
+                            # print(f"titleCritery ex: {ex}")
+                            pass
+                        try:                      
+                            targetPrice = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+3}]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]/text()')[0]
+                            
+                            # print(f"str 277: {targetPrice}")
+                        except:
+                            pass
+                        try:                       
+                            asinArr = targetLink.split('/')
+                            for i, a in enumerate(asinArr):
+                                if asinArr[i] == 'dp':
+                                    asin = asinArr[i+1]
+                            # print(asin)
+                            
+                        except:
+                            pass
+                        resultProto.append({
+                            "targetLink": str(f"{targetLinkPattern}{targetLink}").strip(),
+                            "titleCritery": str(titleCritery.strip()),
+                            "targetPrice": str(targetPrice).strip(),
+                            "asin": str(asin).strip()
+                        })
+                        if len(resultProto) == quanityTargetItems:                                
                             break
                     except:
-                        print(f"sec stap{ex}")
-                        break           
+                        # print(f"sec stap{ex}")
+                        # flagEx1 = True
+                        pass
+                        # break
+                    # else:
+                    #     break            
                     
-        except:
+        except Exception as ex:
+            # print(ex)
+            pass
+        if len(resultProto) == 1:
+            if resultProto[0]['asin'] == '' or resultProto[0]['asin'] == None:                    
+                flagEx1 = True               
+                                    
+        elif len(resultProto) > 1:
+            if resultProto[1]['asin'] == '' or resultProto[1]['asin'] == None:
+                flagEx1 = True 
+        # print(f" str 316{resultProto}")           
+        if flagEx1 == True:
+            resultProto = []
+            # flagEx1 = False
+            case = 2
             # print('case 2')
             firstBlock = soup2.find_all('div', attrs= {'class': 'a-row', 'class': 'a-size-base', 'class': 'a-color-base'})
             # print(f"f bloc len: {len(firstBlock)}")
 
             for f, x in enumerate(firstBlock):
-                targetPrice = ''
+                targetLinkPattern = 'https://www.amazon.com'                                         
                 targetLink = ''
+                targetPrice  = ''
+                titleCritery = ''
                 asin = ''
-                targetPrice = x.find('span', class_= 'a-offscreen').get_text()
-                # print(targetPrice)                    
-                targetLink = x.find_next().get('href')                 
-                # print(targetLink)                        
-                asinArr = targetLink.split('/')
-                for i, a in enumerate(asinArr):
-                    if asinArr[i] == 'dp':
-                        asin = asinArr[i+1]
-                targetLink = targetLink
+                try:
+                    targetPrice = x.find('span', class_= 'a-offscreen').get_text()
+                    # print(targetPrice)    
+                except:
+                    pass  
+                try:              
+                    targetLink = x.find_next().get('href')                 
+                    # print(targetLink) 
+                except:
+                    pass
+                try:                                
+                    titleCritery1 = targetLink.split('keywords')[1].split('=')[1].split('+')[0]
+                    # print(titleCritery1)
+                    titleCritery2 = targetLink.split('keywords')[1].split('=')[1].split('+')[1]
+                    try:
+                        tc = titleCritery1.lower()
+                    except:
+                        pass
+                    # print(titleCritery2) 
+                    if tc == brand:
+                        titleCritery = titleCritery2
+                    else:
+                        titleCritery = titleCritery1                                            
+                    # print(titleCritery) 
+                except:
+                    pass
+                try:                       
+                    asinArr = targetLink.split('/')
+                    for i, a in enumerate(asinArr):
+                        if asinArr[i] == 'dp':
+                            asin = asinArr[i+1]  
+                                            
+                except:
+                    pass
+                
                 resultProto.append({
-                "targetLink": str(f"{targetLinkPattern}{targetLink}").strip(),
-                "targetPrice": str(targetPrice).strip(),
-                "asin": str(asin).strip()
-            })                        
-                if len(resultProto) == int(quanityTargetItems):
-                    flagEx1 = False                        
-                    break            
-        # print(resultProto)
+                    "targetLink": str(f"{targetLinkPattern}{targetLink}").strip(),
+                    "titleCritery": str(titleCritery.strip()),
+                    "targetPrice": str(targetPrice).strip(),
+                    "asin": str(asin).strip()
+                })
+                # print(f" str 364{resultProto}")                       
+                if len(resultProto) == quanityTargetItems:                                               
+                    break 
+      
+
+    except Exception as exSession:
+        # print(exSession)
+        pass
+        
+    finally:
         finResult.append({
             "urlEbayItem": total["urlItem"],
             "title": total["title"],
@@ -682,23 +793,16 @@ def linksHandlerAmazon(total):
             "delivery": total['delivery'],
             "brand": total['brand'],
             "model": total['model'],
-            "urlForAmazon": str(url),
-            "amazonBlock": resultProto                   
+            # "urlForAmazon": str(total),
+            "amazonBlock": resultProto, 
+            "case": case                 
         })
-        # print(flagEx1)       
-        if flagEx1 == True:
-            sessController +=1
-            print(sessController)           
-            if sessController > 1:
-                return
-            else:
-                time.sleep(random.randrange(2, 7))
-                continue
-        else:
-            # print('yes')
-            # print(finResult)
+        # print('yes') 
+        try:           
             return finResult[0]
-
+        except:
+            return
+            
 # amazon finish
 # ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -708,39 +812,84 @@ def linksHandlerAmazon(total):
 def writerr(total):
     print('start writer')
     global total_count 
-    totalTotal = [] 
-    print(len(total)) 
+    # totalTotal = [] 
+    print(f"str 792: {len(total)}") 
     for item in total:
         if item is None:            
-            continue
-        else:
-            totalTotal.append(item) 
-    for item in totalTotal:           
-        for itemAm in item['amazonBlock']:
-            if itemAm['asin'] == '':
-                del itemAm 
-        if item['amazonBlock'] == []:
             del item
-    amazonList = ''
-    with open(f"resultBF2.json", "a", encoding="utf-8") as file: 
-        json.dump(totalTotal, file, indent=4, ensure_ascii=False) 
+        else:
+            for itemAm in item['amazonBlock']:           
+                if itemAm['asin'] == '':
+                    del itemAm 
+            if item['amazonBlock'] == [] or item['amazonBlock'] == '':
+                del item
+
+    
+    with open(f"resultBF9.json", "a", encoding="utf-8") as file: 
+        json.dump(total, file, indent=4, ensure_ascii=False) 
         
-    for item in totalTotal:
+    for item in total:
+        amazonList = ''   
+        # if len(item['amazonBlock']) > 1:                 
+        #     item['amazonBlock'] = item['amazonBlock'][0:len(item['amazonBlock'])]
+        # elif len(item['amazonBlock']) < 5 and len(item['amazonBlock']) !=1:
+        #     item['amazonBlock'] = item['amazonBlock'][0:len(item['amazonBlock'])] 
         for itAm in item['amazonBlock']:
-            amazonList += itAm['targetLink'] + '\n' + itAm['targetPrice'] + '\n'+ itAm['asin'] + '\n\n' 
-        item['amazonBlock'] = amazonList 
-        if item['amazonBlock'] == '':
-            item.clear()       
-     
+
+            if len(item['amazonBlock']) > 1:
+                amazonList += itAm['targetLink'] + '\n' + itAm['targetPrice'] + '\n'+ itAm['asin'] + '\n\n'
+                # flagCritery = False
+                # if item['case'] == 2:
+                #     if (f"{itAm['titleCritery']}").lower() == (f"{item['model']}").lower():
+                #         try:
+                #            amazonList += itAm['targetLink'] + '\n' + itAm['targetPrice'] + '\n'+ itAm['asin'] + '\n\n'                        
+                #         except Exception as ex:
+                #             print(f"str 810: {ex}")
+                #     else:
+                #         del itAm
+                # if item['case'] == 1:
+                #     itCritArr = (f"{itAm['titleCritery']}").split(' ')
+                #     critery = (f"{item['model']}").lower()
+                #     for j, _ in enumerate(itCritArr):                                            
+                #         try:         
+                #             match = re.search(f'r"{critery}"', (f"{itCritArr[j]}").lower())
+                #             if match:
+                #                 flagCritery = True                               
+                #                 break
+                #         except: 
+                #             continue
+                #     if flagCritery == True:
+                #         try:
+                #             amazonList += itAm['targetLink'] + '\n' + itAm['targetPrice'] + '\n'+ itAm['asin'] + '\n\n' 
+                #         except Exception as ex:
+                #             print(f"str 828: {ex}")
+                #     else:
+                #         del itAm                        
+            # elif len(item['amazonBlock']) > 1 and amazonList == '':
+            #     item['amazonBlock'] = item['amazonBlock'][0:len(item['amazonBlock'])] 
+            #     for itt in item['amazonBlock']: 
+            #         try:
+            #             amazonList += itAm['targetLink'] + '\n' + itAm['targetPrice'] + '\n'+ itAm['asin'] + '\n\n' 
+            #         except Exception as ex:
+            #             print(f"str 828: {ex}")
+            if len(item['amazonBlock']) == 1:
+                try:
+                    amazonList = itAm['targetLink'] + '\n' + itAm['targetPrice'] + '\n'+ itAm['asin'] + '\n\n'                          
+                except Exception as ex:
+                    print(f"str 836: {ex}")  
+        item['amazonBlockNew'] = amazonList  
+        del item['amazonBlock']
+        del item['case'] 
+   
     # now = datetime.now() 
     # curentTimeForFile = str(now.strftime("%m/%d/%Y__%H:%M"))  
-    total_count = len(totalTotal)             
-    with open(f'Result2.json', "a", encoding="utf-8") as file: 
-        json.dump(totalTotal, file, indent=4, ensure_ascii=False) 
-    with open(f'Result2.csv', 'w', newline='', encoding='cp1251', errors="ignore") as file:
+    total_count = len(total)             
+    with open(f'Result10.json', "a", encoding="utf-8") as file: 
+        json.dump(total, file, indent=4, ensure_ascii=False) 
+    with open(f'Result10.csv', 'w', newline='', encoding='cp1251', errors="ignore") as file:
         writer = csv.writer(file, delimiter=';')
         writer.writerow(['Ссылка eBay маназмн','Название товара', 'Цена', 'Наличие на складе', 'Дата доставки', 'Бренд', 'Модель', 'Соответствующие товары на Amazon'])
-        for item in totalTotal:
+        for item in total:
             writer.writerow([item['urlEbayItem'], item ['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonBlock']])      
     
 # /////////////////////////////   
@@ -754,8 +903,9 @@ def main():
     paginationReply(url2)       
     finish_time = time.time() - start_time
     print(f"Общее время работы парсера:  {math.ceil(finish_time)} сек")
-    print(f"Количество мультипроцессов:  {multiprocessing.cpu_count()*4}")
+    print(f"Количество мультипроцессов:  {multiprocessing.cpu_count()*3}")
     print(f"Общее количество товаров:  {total_count}")
+    sys.exit()
     
 if __name__ == "__main__":
     main()
