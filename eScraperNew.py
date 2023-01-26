@@ -27,7 +27,7 @@ import sys
 # ////////////////// имя страницы гугл таблицы(сперва создайте)
 # //////// https://docs.google.com/spreadsheets/d/1E8ApONqNaH9EXH8eeyOssTC2RNDRFyZ7njVucOnRNPs/ - ссылка на гугл таблицу
 
-list_name = 'List5'
+list_name = 'List6'
 
 
 hrefsBankVar = []
@@ -38,7 +38,7 @@ agrForEbey = 'ebay.com'
 adderLink = '&_ipg=240&_pgn=1'
 total_count = 0 
 # ress = []
-finResult = []
+# finResult = []
 flag = False
 
 
@@ -50,6 +50,7 @@ ur = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_fil
 
 
 # ur = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=paedistributing&store_cat=0&store_name=paedistributing&_oac=1&LH_PrefLoc=1&LH_ItemCondition=3&LH_BIN=1'
+
 
 
 # ////////////////////////////////////////////////////
@@ -143,7 +144,7 @@ def proxyGenerator():
 def sessionReq(url1, shopArg):
     session = HTMLSession()
     session.trust_env = False
-    r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27))
+    r = session.get(url1, headers=random_headers(shopArg), timeout=(3.05, 21))
     # randomChanel = choice(list(range(0, len(PROXY_LIST)+1)))  
     # if randomChanel == 0:
     #     r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27))
@@ -164,13 +165,13 @@ def paginationReply(url2):
             print('Первый ответ сервера положительный')
         if str(r) == '<Response [503]>':
             try:
-                time.sleep(random.randrange(31,37))
+                time.sleep(random.randrange(1,5))
                 r = sessionReq(url2, agrForEbey)
             except:
                 pass
         if str(r) == '<Response [403]>':
             try:
-                time.sleep(random.randrange(69,87))
+                time.sleep(random.randrange(1,7))
                 r = sessionReq(url2, agrForEbey)
             except:
                 pass
@@ -193,7 +194,7 @@ def paginationReply(url2):
             pass           
             # print(ex)
                   
-        # print(f"Количество страниц пагинации: {lastPagin}")
+        print(f"Количество страниц пагинации: {lastPagin}")
             # print('exPagin and sec req')           
     except Exception as ex:  
         print(f"pagin:  {ex}")
@@ -203,11 +204,11 @@ def paginationReply(url2):
             return
         else:
             paginationReply(url2)
-    finally:
-        try:
-            asyncio.run(gather_registrator_eBay(lastPagin))            
-        except:
-            return
+    # finally:
+    try:
+        asyncio.run(gather_registrator_eBay(lastPagin))            
+    except:
+        return
 
 # ///////////////////////////////////////////////////////////////////////////////////
     
@@ -228,13 +229,13 @@ async def linkerCapturerEbay(itemsCount):
             # print(f"linker response:  {r}") 
             if str(r) == '<Response [503]>':
                 try:
-                    time.sleep(random.randrange(31,37))
+                    # time.sleep(random.randrange(1,5))
                     return
                 except:
                     pass
             if str(r) == '<Response [403]>':
                 try:
-                    time.sleep(random.randrange(61,87))
+                    # time.sleep(random.randrange(1,7))
                     return
                 except:
                     pass
@@ -256,6 +257,7 @@ async def linkerCapturerEbay(itemsCount):
                         if cycleControl == 180:
                             countLincerCapturer +=1
                             if countLincerCapturer >1:
+                                print('Не удалось собрать нужное количество ссылок')
                                 return
                             else:                                
                                 flag = True
@@ -277,6 +279,7 @@ async def linkerCapturerEbay(itemsCount):
             else:
                 countLincerCapturer2 +=1
                 if countLincerCapturer2 >1:
+                    print('Не удалось собрать нужное количество ссылок')
                     return
                 else:
                     time.slep(random.randrange(1,3))
@@ -285,7 +288,7 @@ async def linkerCapturerEbay(itemsCount):
 
 def linksHandlerAmazon(total):
     # print('start Amazon')
-    global finResult
+    # global finResult
     try:
         model = total['model'].lower()
     except:
@@ -296,6 +299,7 @@ def linksHandlerAmazon(total):
     # print(f"url For Amazon: {url}")
 
     while(True):
+        finResult = []
         counterRetry = 0
         counterExceptions = 0                     
         quanityTargetItems = 0
@@ -306,13 +310,13 @@ def linksHandlerAmazon(total):
             # print(f"ответ Амазона:  {r}")
             if str(r) == '<Response [503]>':
                 print('Желтая карточка от Amazon')            
-                time.sleep(random.randrange(1,7))
+                # time.sleep(random.randrange(1,4))
                 break
 
             if str(r) == '<Response [403]>':
                 print('Amazon отверг запрос')
 
-                time.sleep(random.randrange(1,7))
+                time.sleep(random.randrange(1,5))
                 break
 
             if str(r) == '<Response [504]>':
@@ -324,7 +328,7 @@ def linksHandlerAmazon(total):
                 break 
             if str(r) == '<Response [443]>':
                 print('Проблемы с подключениемю. Проверьте интернет соединение')
-                time.sleep(random.randrange(1,7))
+                time.sleep(random.randrange(1,5))
                 counterExceptions +=1
                 if counterExceptions >1:
                     break
@@ -357,161 +361,161 @@ def linksHandlerAmazon(total):
         
         except Exception as ex:
             # print(f" str 616  {ex}")
-            pass
+            break
             # return
 
         
         if quanityTargetItems > 50:
             quanityTargetItems = 50        
         try: 
-            try:                
-                resultProto = [] 
+            # try:                
+            #     resultProto = [] 
                                            
-                for i in range(quanityTargetItems):
-                    targetLinkPattern = 'https://www.amazon.com'                     
-                    targetLink = ''
-                    targetPrice  = ''
-                    titleCritery = ''
-                    asin = '' 
-                    if i == 0:
-                        try:
-                            try:
-                                targetLink = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[1]/h2/a')[0].get('href')                        
-                                # 
-                                # print(targetLink)
-                            except Exception as ex:
-                                pass
-                                # print(f"636 {ex}")
-                            try:
-                                titleCritery1Arr = []
-                                titleCritery1Arr = eval(str(dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[1]/h2/a/span//text()')))[0]
+            #     for i in range(quanityTargetItems):
+            #         targetLinkPattern = 'https://www.amazon.com'                     
+            #         targetLink = ''
+            #         targetPrice  = ''
+            #         titleCritery = ''
+            #         asin = '' 
+            #         if i == 0:
+            #             try:
+            #                 try:
+            #                     targetLink = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[1]/h2/a')[0].get('href')                        
+            #                     # 
+            #                     # print(targetLink)
+            #                 except Exception as ex:
+            #                     pass
+            #                     # print(f"636 {ex}")
+            #                 try:
+            #                     titleCritery1Arr = []
+            #                     titleCritery1Arr = eval(str(dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[1]/h2/a/span//text()')))[0]
                             
-                                titleCritery1Arr = titleCritery1Arr.split(' ')
-                                # print(titleCritery1Arr)
-                                for it in titleCritery1Arr:       
-                                    it = it.lower()
-                                    if it == model or it == model[:-1]:
-                                        titleCritery = model
-                                        break                                           
-                                # print(titleCritery) 
+            #                     titleCritery1Arr = titleCritery1Arr.split(' ')
+            #                     # print(titleCritery1Arr)
+            #                     for it in titleCritery1Arr:       
+            #                         it = it.lower()
+            #                         if it == model or it == model[:-1]:
+            #                             titleCritery = model
+            #                             break                                           
+            #                     # print(titleCritery) 
 
-                                # print(titleCritery)
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[1]/h2/a/span
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[3]/div/div/div/div/div[2]/div[1]/h2/a/span
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[4]/div/div/div/div/div[3]/div[1]/h2/a/span
+            #                     # print(titleCritery)
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[1]/h2/a/span
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[3]/div/div/div/div/div[2]/div[1]/h2/a/span
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[4]/div/div/div/div/div[3]/div[1]/h2/a/span
 
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[6]/div/div/div/div/div[2]/div[1]/h2/a/span
-                            except Exception as ex:
-                                pass
-                                # print(f"643 {ex}")
-                            try:
-                                targetPrice = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]//text()')[0]
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[6]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[7]/div/div/div/div/div[2]/div[3]/div/a/span/span[1]
-                            #    //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[8]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]
-                                # print(targetPrice)
-                            except Exception as ex:
-                                pass
-                                #  print(f"649 str{ex}") 
-                            try:                           
-                                asinArr = targetLink.split('/')                           
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[6]/div/div/div/div/div[2]/div[1]/h2/a/span
+            #                 except Exception as ex:
+            #                     pass
+            #                     # print(f"643 {ex}")
+            #                 try:
+            #                     targetPrice = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]//text()')[0]
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[6]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[7]/div/div/div/div/div[2]/div[3]/div/a/span/span[1]
+            #                 #    //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[8]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]
+            #                     # print(targetPrice)
+            #                 except Exception as ex:
+            #                     pass
+            #                     #  print(f"649 str{ex}") 
+            #                 try:                           
+            #                     asinArr = targetLink.split('/')                           
                                 
-                                for i, a in enumerate(asinArr):
-                                    if asinArr[i] == 'dp':
-                                        asin = asinArr[i+1]
-                            except Exception as ex:
-                                #  print(f"657 str{ex}")
-                                pass
+            #                     for i, a in enumerate(asinArr):
+            #                         if asinArr[i] == 'dp':
+            #                             asin = asinArr[i+1]
+            #                 except Exception as ex:
+            #                     #  print(f"657 str{ex}")
+            #                     pass
                          
-                            resultProto.append({
-                                "targetLink": str(f"{targetLinkPattern}{targetLink}").strip(),
-                                "titleCritery": str(titleCritery.strip()),
-                                "targetPrice": str(targetPrice).strip(),
-                                "asin": str(asin).strip()
-                            })
+            #                 resultProto.append({
+            #                     "targetLink": str(f"{targetLinkPattern}{targetLink}").strip(),
+            #                     "titleCritery": str(titleCritery.strip()),
+            #                     "targetPrice": str(targetPrice).strip(),
+            #                     "asin": str(asin).strip()
+            #                 })
 
-                        except Exception as ex:
-                            pass
-                            # print(f"667 str{ex}")
+            #             except Exception as ex:
+            #                 pass
+            #                 # print(f"667 str{ex}")
 
-                    else:                        
-                        try:
-                            try:
-                                targetLink = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/div/div/div[2]/div[1]/h2/a')[0].get('href')
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[1]/h2/a
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[3]/div/div/div/div/div[2]/div[1]/h2/a
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[4]/div/div/div/div/div[3]/div[1]/h2/a
-                                # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[6]/div/div/div/div/div[2]/div[1]/h2/a
-                                # print(f"str 673: {targetLink}")
-                                # print(targetLink)
-                            except Exception as ex:
-                                pass
-                                # print(f"675 str{ex}")                               
+            #         else:                        
+            #             try:
+            #                 try:
+            #                     targetLink = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/div/div/div[2]/div[1]/h2/a')[0].get('href')
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[2]/div/div/div/div/div[2]/div[1]/h2/a
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[3]/div/div/div/div/div[2]/div[1]/h2/a
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[4]/div/div/div/div/div[3]/div[1]/h2/a
+            #                     # //*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[6]/div/div/div/div/div[2]/div[1]/h2/a
+            #                     # print(f"str 673: {targetLink}")
+            #                     # print(targetLink)
+            #                 except Exception as ex:
+            #                     pass
+            #                     # print(f"675 str{ex}")                               
                                 
-                            try:
-                                titleCritery1Arr = []
-                                titleCritery1Arr = eval(str(dom.xpath(f'///*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/div/div/div[2]/div[1]/h2/a/span//text()')))[0]                                 
+            #                 try:
+            #                     titleCritery1Arr = []
+            #                     titleCritery1Arr = eval(str(dom.xpath(f'///*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/div/div/div[2]/div[1]/h2/a/span//text()')))[0]                                 
                                 
-                                titleCritery1Arr = titleCritery1Arr.split(' ')
-                                # print(titleCritery1Arr)
-                                for it in titleCritery1Arr:       
-                                    it = it.lower()
-                                    if it == model or it == model[:-1]:
-                                        titleCritery = model
-                                        break                                           
-                                # print(titleCritery) 
+            #                     titleCritery1Arr = titleCritery1Arr.split(' ')
+            #                     # print(titleCritery1Arr)
+            #                     for it in titleCritery1Arr:       
+            #                         it = it.lower()
+            #                         if it == model or it == model[:-1]:
+            #                             titleCritery = model
+            #                             break                                           
+            #                     # print(titleCritery) 
 
-                            except Exception as ex:
-                                pass
-                                # print(f"682 str{ex}")
+            #                 except Exception as ex:
+            #                     pass
+            #                     # print(f"682 str{ex}")
                                 
-                            try:                      
-                                targetPrice = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]//text()')[0]
+            #                 try:                      
+            #                     targetPrice = dom.xpath(f'//*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/div/div/div[2]/div[3]/div/a/span[1]/span[1]//text()')[0]
                                 
-                                # print(f"str 277: {targetPrice}")
-                            except Exception as ex:
-                                pass
-                                # print(f"689 str{ex}")
-                            try:                       
-                                asinArr = targetLink.split('/')
-                                for i, a in enumerate(asinArr):
-                                    if asinArr[i] == 'dp':
-                                        asin = asinArr[i+1]
-                                # print(asin)
+            #                     # print(f"str 277: {targetPrice}")
+            #                 except Exception as ex:
+            #                     pass
+            #                     # print(f"689 str{ex}")
+            #                 try:                       
+            #                     asinArr = targetLink.split('/')
+            #                     for i, a in enumerate(asinArr):
+            #                         if asinArr[i] == 'dp':
+            #                             asin = asinArr[i+1]
+            #                     # print(asin)
                                 
-                            except Exception as ex:
-                                pass
-                                # print(f"697 str{ex}")
+            #                 except Exception as ex:
+            #                     pass
+            #                     # print(f"697 str{ex}")
                            
-                            resultProto.append({
-                                "targetLink": str(f"{targetLinkPattern}{targetLink}").strip(),
-                                "titleCritery": str(titleCritery.strip()),
-                                "targetPrice": str(targetPrice).strip(),
-                                "asin": str(asin).strip()
-                            })
+            #                 resultProto.append({
+            #                     "targetLink": str(f"{targetLinkPattern}{targetLink}").strip(),
+            #                     "titleCritery": str(titleCritery.strip()),
+            #                     "targetPrice": str(targetPrice).strip(),
+            #                     "asin": str(asin).strip()
+            #                 })
                         
-                            if len(resultProto) == quanityTargetItems:                                
-                                break
-                        except:
-                            # print(f"707 {ex}")
-                            pass
+            #                 if len(resultProto) == quanityTargetItems:                                
+            #                     break
+            #             except:
+            #                 # print(f"707 {ex}")
+            #                 pass
            
                         
-            except Exception as ex:
-                # print(ex)
-                pass
-            if len(resultProto) == 1:
-                if resultProto[0]['asin'] == '' or resultProto[0]['asin'] == None:                    
-                    flagEx1 = True               
+            # except Exception as ex:
+            #     # print(ex)
+            #     pass
+            # if len(resultProto) == 1:
+            #     if resultProto[0]['asin'] == '' or resultProto[0]['asin'] == None:                    
+            #         flagEx1 = True               
                                         
-            elif len(resultProto) > 1:
-                if resultProto[1]['asin'] == '' or resultProto[1]['asin'] == None:
-                    flagEx1 = True 
+            # elif len(resultProto) > 1:
+            #     if resultProto[1]['asin'] == '' or resultProto[1]['asin'] == None:
+            #         flagEx1 = True 
             # print(f" str 316{resultProto}")           
-            if flagEx1 == True:
+            if flagEx1 == False:
                 resultProto = []
-                flagEx1 == False                
+                # flagEx1 == False                
                 # print('case 2')
                 firstBlock = soup2.find_all('div', attrs= {'class': 'a-row', 'class': 'a-size-base', 'class': 'a-color-base'})
                 # print(f"f bloc len: {len(firstBlock)}")
@@ -596,7 +600,7 @@ def linksHandlerAmazon(total):
             })
             # print(finResult)
             # print('yes')
-            return finResult
+            return finResult[0]
  
 # //////////////////////////////////////////////////////////////////
 
@@ -613,13 +617,13 @@ def hendlerLinks(link):
         # print(f"ответ обработчика ссілок Ебей:  {r}")
         if str(r) == '<Response [503]>':
             try:
-                time.sleep(random.randrange(31,37))
+                time.sleep(random.randrange(1,5))
                 return
             except:
                 pass
         if str(r) == '<Response [403]>':
             try:
-                time.sleep(random.randrange(61,87))
+                time.sleep(random.randrange(1,7))
                 return
             except:
                 pass
@@ -827,7 +831,7 @@ def hendlerLinks(link):
         if result[0] is None:        
             pass 
         else:
-            return result[0]
+            return linksHandlerAmazon(result[0])
 
 # //////////////////////////////////////////////////////////////////////
 
@@ -847,18 +851,19 @@ async def gather_registrator_eBay(lastPagin):
 
 def gather_Linker_Ebay(hrefsBank):    
     print(f"Количество ссылок для обработки: {len(hrefsBank)}")
-    global finResult    
+    # global finResult    
         
-    with multiprocessing.Pool(multiprocessing.cpu_count()) as p2:                     
-        # p2.map_async(hendlerLinks, hrefsBank[0:10], callback=linksHandlerAmazon)
-        for href in hrefsBank:      
-            p2.apply_async(hendlerLinks, args=(href, ), callback=linksHandlerAmazon)
+    with multiprocessing.Pool(multiprocessing.cpu_count() * 3) as p2:                     
+        finRes = p2.map(hendlerLinks, hrefsBank[0:20])
+        # for href in hrefsBank[111:211]:      
+        #     p2.apply_async(hendlerLinks, args=(href, ), callback=linksHandlerAmazon)
         p2.close()
         # p2.terminate()
-        p2.join() 
+        p2.join()
 
-    writerr(finResult) 
-    hrefsBank = [] 
+        writerr(finRes) 
+        hrefsBank = [] 
+        finRes = []
         
 # /////////////////////////////////////////////////////////
 # amazon start
@@ -910,6 +915,7 @@ def writerr(total):
     # print('start writer')
     global total_count
     global list_name 
+    global finResult
     gs = GoogleSheet()   
     
     total = list(filter(None, total)) 
@@ -958,22 +964,36 @@ def writerr(total):
     for i, item in enumerate(total):
        test_values[i] = [item['urlEbayItem'], item['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonBlock']]
     gs.updateRangeValues(test_range, test_values) 
+    if len(total) == 0:
+        print('Упс! Что-то пошло не так...')
     total = []
-    finResult = []
+    
 # # /////////////////////////////   
 # # писатель результатов финиш 
+
+
+# ///////////// инпут
+
+def reciveInput():
+    global list_name
+    url = input('Введите адрес магазина', )
+    list_name = input('Создайте и введите название страницы Гугл Таблицы', )
+
+
+# ////////////////////////// инпут финиш
 
 # # функция запуска скрипта
 # # ////////////////////////////////
 
 def main():
     global total_count
-    start_time = time.time() 
+    start_time = time.time()
+    # reciveInput() 
     print('Старт...')     
     paginationReply(url2)         
     finish_time = time.time() - start_time
     print(f"Общее время работы парсера:  {math.ceil(finish_time)} сек")
-    print(f"Количество мультипроцессов:  {multiprocessing.cpu_count()}")
+    print(f"Количество мультипроцессов:  {multiprocessing.cpu_count() *2}")
     print(f"Общее количество товаров:  {total_count}")
     sys.exit()
     
