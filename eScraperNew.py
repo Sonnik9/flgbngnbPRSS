@@ -1,4 +1,11 @@
-
+from __future__ import print_function
+from google.auth.transport.requests import Request
+import os.path
+import pickle
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from requests_html import HTMLSession
 import requests
 from bs4 import BeautifulSoup
@@ -16,7 +23,13 @@ import aiohttp
 from fake_useragent import UserAgent
 from datetime import datetime
 import sys
-start_time = time.time()
+
+# ////////////////// имя страницы гугл таблицы(сперва создайте)
+# //////// https://docs.google.com/spreadsheets/d/1E8ApONqNaH9EXH8eeyOssTC2RNDRFyZ7njVucOnRNPs/ - ссылка на гугл таблицу
+
+list_name = 'List4'
+
+
 hrefsBankVar = []
 uagent = UserAgent()
 itemsCount = 0 
@@ -42,6 +55,9 @@ ur = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_fil
 
 adderLink = '&_ipg=240&_pgn=1'
 url2 = f"{ur}{adderLink}"
+
+with open("proxy.txt", encoding="utf-8") as file:
+    PROXY_LIST = ''.join(file.readlines()).split('\n')
 
 desktop_agents = ['Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
                   uagent.random,
@@ -116,8 +132,7 @@ def random_headers(argLink):
     
 # python amazonHandler.py
 
-with open("proxy.txt", encoding="utf-8") as file:
-    PROXY_LIST = ''.join(file.readlines()).split('\n')
+
 def proxyGenerator():
     proxiess = {
         "https": f"http://{choice(PROXY_LIST)}",
@@ -126,9 +141,14 @@ def proxyGenerator():
     return proxiess
 def sessionReq(url1, shopArg):
     session = HTMLSession()
-    session.trust_env = False    
-    # r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27), proxies=proxyGenerator())
+    session.trust_env = False
     r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27))
+    # randomChanel = choice(list(range(0, len(PROXY_LIST)+1)))  
+    # if randomChanel == 0:
+    #     r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27))
+    # else:          
+    #     r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27), proxies=proxyGenerator())
+    
     return r
 
 def paginationReply(url2): 
@@ -168,8 +188,9 @@ def paginationReply(url2):
             # print(ptest) 
             ptest = int(soup.find('h1', class_='srp-controls__count-heading').get_text().split(' ')[0].replace(',', '').replace('+', ''))
             lastPagin = math.ceil(int(ptest)/240)
-        except Exception as ex:            
-            print(ex)
+        except Exception as ex: 
+            pass           
+            # print(ex)
                   
         print(f"Количество страниц пагинации: {lastPagin}")
             # print('exPagin and sec req')           
@@ -188,7 +209,6 @@ def paginationReply(url2):
             return
 
 # ///////////////////////////////////////////////////////////////////////////////////
-
     
 async def linkerCapturerEbay(itemsCount): 
     global hrefsBankVar
@@ -225,12 +245,11 @@ async def linkerCapturerEbay(itemsCount):
             try:
                 soup = BeautifulSoup(r.text, "lxml")
                 hrefs = soup.find_all('a', class_='s-item__link')            
-                for i, item in enumerate(hrefs):
+                for item in hrefs:
                     if item is None:
                         continue 
                     else:
-                        hrefsBankVar.append(item.get('href'))     
-         
+                        hrefsBankVar.append(item.get('href'))      
 
             except:
                 # print(f'исключение на 226 стр') 
@@ -241,14 +260,12 @@ async def linkerCapturerEbay(itemsCount):
                 return
             else:
                 time.slep(random.randrange(1,3))
-                continue        
-            
+                continue           
             # print(f"linker capturer:  {ex}") 
         finally:
             return 
 
 def linksHandlerAmazon(total):
-
     # print('start Amazon')
     global finResult
     try:
@@ -412,13 +429,11 @@ def linksHandlerAmazon(total):
                                 # print(targetLink)
                             except Exception as ex:
                                 pass
-                                # print(f"675 str{ex}")
-                                
+                                # print(f"675 str{ex}")                               
                                 
                             try:
                                 titleCritery1Arr = []
-                                titleCritery1Arr = eval(str(dom.xpath(f'///*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/div/div/div[2]/div[1]/h2/a/span//text()')))[0] 
-                                                          
+                                titleCritery1Arr = eval(str(dom.xpath(f'///*[@id="search"]/div[1]/div[1]/div/span[1]/div[1]/div[{i+2}]/div/div/div/div/div[2]/div[1]/h2/a/span//text()')))[0]                                 
                                 
                                 titleCritery1Arr = titleCritery1Arr.split(' ')
                                 # print(titleCritery1Arr)
@@ -479,7 +494,6 @@ def linksHandlerAmazon(total):
             if flagEx1 == True:
                 resultProto = []
                 flagEx1 == False                
-                
                 # print('case 2')
                 firstBlock = soup2.find_all('div', attrs= {'class': 'a-row', 'class': 'a-size-base', 'class': 'a-color-base'})
                 # print(f"f bloc len: {len(firstBlock)}")
@@ -518,8 +532,7 @@ def linksHandlerAmazon(total):
                         asinArr = targetLink.split('/')
                         for i, a in enumerate(asinArr):
                             if asinArr[i] == 'dp':
-                                asin = asinArr[i+1] 
-                                                
+                                asin = asinArr[i+1]                                               
                     except:
                         pass
                    
@@ -693,7 +706,7 @@ def hendlerLinks(link):
         try:
             modelArr = model.split(', ')
             if len(modelArr) >1:
-                # model_item = modelArr[0]                
+                               
                 for itModN in modelArr:
                     model_itemPatern += itModN + '+'
                 model = model_itemPatern[0:len(model_itemPatern)-1]
@@ -719,7 +732,7 @@ def hendlerLinks(link):
             try:   
                 upc = soup.find_all('div', class_='ux-layout-section__row')
                 upcUpc = 'upc'
-                # upcUpc = upcUpc.lower()
+                
                 for row in upc:
                     section = row.find_all('span', class_='ux-textspans')
                     for j, upcc in enumerate(section):
@@ -796,7 +809,6 @@ def hendlerLinks(link):
         else:
             return result[0]
 
-
 # //////////////////////////////////////////////////////////////////////
 
 async def gather_registrator_eBay(lastPagin):
@@ -805,9 +817,8 @@ async def gather_registrator_eBay(lastPagin):
         tasks = [] 
         for i in range(1, lastPagin+1):
             task = asyncio.create_task(linkerCapturerEbay(i))
-            tasks.append(task)      
-        
-            tasks.append(task)
+            tasks.append(task)        
+            # tasks.append(task)
             # time.sleep(random.randrange(1,4))
         await asyncio.gather(*tasks)    
     gather_Linker_Ebay(hrefsBankVar)
@@ -820,7 +831,7 @@ def gather_Linker_Ebay(hrefsBank):
     print(f"Количество ссылок для обработки: {len(hrefsBank)}")
     global finResult    
         
-    with multiprocessing.Pool(multiprocessing.cpu_count() * 3) as p2: 
+    with multiprocessing.Pool(multiprocessing.cpu_count() * 5) as p2: 
         for href in hrefsBank:      
             p2.apply_async(hendlerLinks, args=(href, ), callback=linksHandlerAmazon)
         p2.close()
@@ -842,11 +853,47 @@ def gather_Linker_Ebay(hrefsBank):
 # ////////////////////////////////////////////////////////////////////////////////////////
 # писатель результатов старт
 
+
+class GoogleSheet:
+    SPREADSHEET_ID = '1E8ApONqNaH9EXH8eeyOssTC2RNDRFyZ7njVucOnRNPs'
+    SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+    service = None
+
+    def __init__(self):
+        creds = None
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                creds = pickle.load(token)
+
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:                
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', self.SCOPES)
+                creds = flow.run_local_server(port=0)
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+
+        self.service = build('sheets', 'v4', credentials=creds)
+
+    def updateRangeValues(self, range, values):
+        data = [{
+            'range': range,
+            'values': values
+        }]
+        body = {
+            'valueInputOption': 'USER_ENTERED',
+            'data': data
+        }
+        result = self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.SPREADSHEET_ID, body=body).execute()        
+
 def writerr(total):
     # print('start writer')
     global total_count
-        
-    # print(f"str 792: {len(total)}")
+    global list_name 
+    gs = GoogleSheet()   
+    
     total = list(filter(None, total)) 
     total = list(filter(lambda item: item['amazonBlock'] != [], total))
     total = list(filter(lambda item: item['amazonBlock'] != '', total))
@@ -860,8 +907,7 @@ def writerr(total):
             if len(item['amazonBlockNew']) == 0:
                 item['amazonBlock'] = item['amazonBlock'][0:7] 
             else:              
-                item['amazonBlock'] = item['amazonBlockNew']    
-                   
+                item['amazonBlock'] = item['amazonBlockNew']                   
             del item['amazonBlockNew']
       
         for it in item['amazonBlock']:
@@ -885,7 +931,15 @@ def writerr(total):
         writer.writerow(['Ссылка на eBay маназин','Название товара', 'Цена', 'Наличие на складе', 'Дата доставки', 'Бренд', 'Модель', 'Соответствующие товары на Amazon'])
         for item in total:
             writer.writerow([item['urlEbayItem'], item ['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonBlock']])      
-    
+    time.sleep(1)
+    with open(f'Result_{curentTimeForFile}.json', encoding="utf-8") as file: 
+        total = json.load(file)
+
+    test_range = f'{list_name}!A2:H{len(total)+1}'   
+    test_values = [[] for i in range(0,len(total))]
+    for i, item in enumerate(total):
+       test_values[i] = [item['urlEbayItem'], item['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonBlock']]
+    gs.updateRangeValues(test_range, test_values) 
     total = []
 # # /////////////////////////////   
 # # писатель результатов финиш 
@@ -894,25 +948,20 @@ def writerr(total):
 # # ////////////////////////////////
 
 def main():
-    global total_count 
+    global total_count
+    start_time = time.time() 
     print('Старт...')     
     paginationReply(url2)         
     finish_time = time.time() - start_time
     print(f"Общее время работы парсера:  {math.ceil(finish_time)} сек")
-    print(f"Количество мультипроцессов:  {multiprocessing.cpu_count()*3}")
+    print(f"Количество мультипроцессов:  {multiprocessing.cpu_count()*5}")
     print(f"Общее количество товаров:  {total_count}")
     sys.exit()
     
 if __name__ == "__main__":
     main()
 
-# python eScraperNew.py
-    
+# python eScraperNew.py    
     
 # pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
-
-# https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=paedistributing&store_cat=0&store_name=paedistributing&_oac=1&LH_PrefLoc=1&LH_ItemCondition=3&LH_BIN=1
-
-
-# https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=paedistributing&store_cat=0&store_name=paedistributing&_oac=1&LH_PrefLoc=1&LH_ItemCondition=3&LH_BIN=1
