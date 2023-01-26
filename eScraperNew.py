@@ -18,8 +18,11 @@ from lxml import etree
 import math
 import re
 import multiprocessing
+from multiprocessing import Pool
 import asyncio
 import aiohttp
+import mpire
+from mpire import WorkerPool
 from fake_useragent import UserAgent
 from datetime import datetime
 import sys
@@ -27,22 +30,20 @@ import sys
 # ////////////////// имя страницы гугл таблицы(сперва создайте)
 # //////// https://docs.google.com/spreadsheets/d/1E8ApONqNaH9EXH8eeyOssTC2RNDRFyZ7njVucOnRNPs/ - ссылка на гугл таблицу
 
-list_name = 'List6'
-
-
+list_name = 'Test3'
 hrefsBankVar = []
 uagent = UserAgent()
 itemsCount = 0 
 agrForAmazon = 'amazon.com'
 agrForEbey = 'ebay.com'
-adderLink = '&_ipg=240&_pgn=1'
+# adderLink = '&_ipg=240&_pgn=1'
 total_count = 0 
 # ress = []
 # finResult = []
 flag = False
 
 
-ur = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=worxtools&store_cat=0&store_name=worxlawnandgardenequipment&_oac=1'
+# ur = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=worxtools&store_cat=0&store_name=worxlawnandgardenequipment&_oac=1'
 # url = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=worxtools&store_cat=0&store_name=worxlawnandgardenequipment&_oac=1'
 
 
@@ -55,8 +56,8 @@ ur = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_fil
 
 # ////////////////////////////////////////////////////
 
-adderLink = '&_ipg=240&_pgn=1'
-url2 = f"{ur}{adderLink}"
+# adderLink = '&_ipg=240&_pgn=1'
+# url2 = f"{ur}{adderLink}"
 
 with open("proxy.txt", encoding="utf-8") as file:
     PROXY_LIST = ''.join(file.readlines()).split('\n')
@@ -144,35 +145,34 @@ def proxyGenerator():
 def sessionReq(url1, shopArg):
     session = HTMLSession()
     session.trust_env = False
-    r = session.get(url1, headers=random_headers(shopArg), timeout=(3.05, 21))
+    r = session.get(url1, headers=random_headers(shopArg), timeout=(3.15, 21.15))
     # randomChanel = choice(list(range(0, len(PROXY_LIST)+1)))  
     # if randomChanel == 0:
     #     r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27))
     # else:          
-    #     r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27), proxies=proxyGenerator())
-    
+    #     r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27), proxies=proxyGenerator())    
     return r
 
-def paginationReply(url2): 
+def paginationReply(url): 
     paginController = 0   
     lastPagin = 0
     agrForEbey = 'ebay.com' 
          
     try:
-        r = sessionReq(url2, agrForEbey)          
+        r = sessionReq(url, agrForEbey)          
         # print(r)
         if str(r) == '<Response [200]>':
             print('Первый ответ сервера положительный')
         if str(r) == '<Response [503]>':
             try:
                 time.sleep(random.randrange(1,5))
-                r = sessionReq(url2, agrForEbey)
+                r = sessionReq(url, agrForEbey)
             except:
                 pass
         if str(r) == '<Response [403]>':
             try:
                 time.sleep(random.randrange(1,7))
-                r = sessionReq(url2, agrForEbey)
+                r = sessionReq(url, agrForEbey)
             except:
                 pass
         if str(r) == '<Response [504]>':
@@ -196,7 +196,8 @@ def paginationReply(url2):
                   
         print(f"Количество страниц пагинации: {lastPagin}")
         try:
-            asyncio.run(gather_registrator_eBay(lastPagin))            
+            hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))
+            asyncio.run(gather_registrator_eBay(hrefsBlockPagination))            
         except:
             return
             # print('exPagin and sec req')           
@@ -207,15 +208,14 @@ def paginationReply(url2):
             print('Упс! Что-то пошло не так')
             return
         else:
-            paginationReply(url2)
+            paginationReply(url)
     # finally:
    
 
 # ///////////////////////////////////////////////////////////////////////////////////
     
-async def linkerCapturerEbay(itemsCount): 
-    global hrefsBankVar
-    global ur
+async def linkerCapturerEbay(href): 
+    global hrefsBankVar    
     global flag
     flag = False
     countLincerCapturer = 0 
@@ -224,9 +224,8 @@ async def linkerCapturerEbay(itemsCount):
     
     agrForEbey = 'ebay.com'
     while(True):
-        try:
-            linkk = f'{ur}&_ipg=240&_pgn={itemsCount}'
-            r = sessionReq(linkk, agrForEbey)
+        try:            
+            r = sessionReq(href, agrForEbey)
             # print(f"linker response:  {r}") 
             if str(r) == '<Response [503]>':
                 try:
@@ -514,7 +513,7 @@ def linksHandlerAmazon(total):
             #     if resultProto[1]['asin'] == '' or resultProto[1]['asin'] == None:
             #         flagEx1 = True 
             # print(f" str 316{resultProto}")           
-            if flagEx1 == False:
+            # if flagEx1 == False:
                 resultProto = []
                 # flagEx1 == False                
                 # print('case 2')
@@ -836,36 +835,29 @@ def hendlerLinks(link):
 
 # //////////////////////////////////////////////////////////////////////
 
-async def gather_registrator_eBay(lastPagin):
+async def gather_registrator_eBay(hrefsBlockPagination):
     global hrefsBankVar   
     async with aiohttp.ClientSession() as session:       
         tasks = [] 
-        for i in range(1, lastPagin+1):
-            task = asyncio.create_task(linkerCapturerEbay(i))
+        for href in hrefsBlockPagination:
+            task = asyncio.create_task(linkerCapturerEbay(href))
             tasks.append(task)
         await asyncio.gather(*tasks)    
     gather_Linker_Ebay(hrefsBankVar)
     hrefsBankVar = []
 
 # /////////////////////////////////////////////////////////////////////////////
-
-
-def gather_Linker_Ebay(hrefsBank):    
+def gather_Linker_Ebay(hrefsBank):
     print(f"Количество ссылок для обработки: {len(hrefsBank)}")
-    # global finResult    
-        
-    with multiprocessing.Pool(multiprocessing.cpu_count() * 3) as p2:                     
+    # n = multiprocessing.cpu_count() * 10  
+    n = 21
+    # 21 для моего  # 
+    with WorkerPool(n_jobs = n) as p2:                      
         finRes = p2.map(hendlerLinks, hrefsBank[0:20])
-        # for href in hrefsBank[111:211]:      
-        #     p2.apply_async(hendlerLinks, args=(href, ), callback=linksHandlerAmazon)
-        p2.close()
-        # p2.terminate()
-        p2.join()
-
         writerr(finRes) 
         hrefsBank = [] 
         finRes = []
-        
+                
 # /////////////////////////////////////////////////////////
 # amazon start
 
@@ -913,10 +905,9 @@ class GoogleSheet:
         result = self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.SPREADSHEET_ID, body=body).execute()        
 
 def writerr(total):
-    # print('start writer')
+    print('Запись результатов')
     global total_count
-    global list_name 
-    global finResult
+    global list_name    
     gs = GoogleSheet()   
     
     total = list(filter(None, total)) 
@@ -937,11 +928,15 @@ def writerr(total):
       
         for it in item['amazonBlock']:
             if len(item['amazonBlock']) == 0:
-                item['amazonBlock'] = it['targetLink'] + '\n' + it['targetPrice'] + '\n' + it['asin'] + '\n\n'
-                continue
+                item['amazonLink'] = it['targetLink'] + '\n'
+                item['amazonPrice'] = it['targetPrice'] + '\n'
+                item['amazonAsin'] = it['asin'] + '\n'
+                break
             else:
-                amazonList += it['targetLink'] + '\n' + it['targetPrice'] + '\n' + it['asin'] + '\n\n'
-            item['amazonBlock'] = amazonList                
+                item['amazonLink'] += it['targetLink'] + '\n'
+                item['amazonPrice'] += it['targetPrice'] + '\n'
+                item['amazonAsin'] += it['asin'] + '\n'                
+                           
         
     total = list(filter(lambda item: item['amazonBlock'] != [], total))    
     total_count = len(total) 
@@ -953,17 +948,17 @@ def writerr(total):
 
     with open(f'Result_{curentTimeForFile}.csv', 'w', newline='', encoding='cp1251', errors="ignore") as file:
         writer = csv.writer(file, delimiter=';')
-        writer.writerow(['Ссылка на eBay маназин','Название товара', 'Цена', 'Наличие на складе', 'Дата доставки', 'Бренд', 'Модель', 'Соответствующие товары на Amazon'])
+        writer.writerow(['Ссылка на eBay маназин','Название товара', 'Цена', 'Наличие на складе', 'Дата доставки', 'Бренд', 'Модель', 'Ссылка на соответствующий товар на Amazon', 'Цена на Amazon', 'Асин'])
         for item in total:
-            writer.writerow([item['urlEbayItem'], item ['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonBlock']])      
+            writer.writerow([item['urlEbayItem'], item ['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonLink'], item['amazonPrice'], item['amazonAsin']])      
     time.sleep(1)
     with open(f'Result_{curentTimeForFile}.json', encoding="utf-8") as file: 
         total = json.load(file)
 
-    test_range = f'{list_name}!A2:H{len(total)+1}'   
+    test_range = f'{list_name}!A2:J{len(total)+1}'   
     test_values = [[] for i in range(0,len(total))]
     for i, item in enumerate(total):
-       test_values[i] = [item['urlEbayItem'], item['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonBlock']]
+       test_values[i] = [item['urlEbayItem'], item['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonLink'], item['amazonPrice'], item['amazonAsin']]
     gs.updateRangeValues(test_range, test_values) 
     if len(total) == 0:
         print('Упс! Что-то пошло не так...')
@@ -972,15 +967,15 @@ def writerr(total):
 # # /////////////////////////////   
 # # писатель результатов финиш 
 
-
 # ///////////// инпут
 
 def reciveInput():
     global list_name
     url = input('Введите адрес магазина', )
-    list_name = input('Создайте и введите название страницы Гугл Таблицы', )
-
-
+    # list_name = input('Создайте и введите название страницы Гугл Таблицы', )
+    print('Старт...') 
+    paginationReply(url)
+    
 # ////////////////////////// инпут финиш
 
 # # функция запуска скрипта
@@ -989,9 +984,7 @@ def reciveInput():
 def main():
     global total_count
     start_time = time.time()
-    # reciveInput() 
-    print('Старт...')     
-    paginationReply(url2)         
+    reciveInput()            
     finish_time = time.time() - start_time
     print(f"Общее время работы парсера:  {math.ceil(finish_time)} сек")
     print(f"Количество мультипроцессов:  {multiprocessing.cpu_count() *2}")
@@ -1004,6 +997,6 @@ if __name__ == "__main__":
 # python eScraperNew.py
 
 # pip install aiohttp
-    
+# pip install mpire    
 # pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
