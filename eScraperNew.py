@@ -27,7 +27,7 @@ import sys
 # ////////////////// имя страницы гугл таблицы(сперва создайте)
 # //////// https://docs.google.com/spreadsheets/d/1E8ApONqNaH9EXH8eeyOssTC2RNDRFyZ7njVucOnRNPs/ - ссылка на гугл таблицу
 
-list_name = 'List4'
+list_name = 'List5'
 
 
 hrefsBankVar = []
@@ -37,8 +37,9 @@ agrForAmazon = 'amazon.com'
 agrForEbey = 'ebay.com'
 adderLink = '&_ipg=240&_pgn=1'
 total_count = 0 
-ress = []
+# ress = []
 finResult = []
+flag = False
 
 
 ur = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=worxtools&store_cat=0&store_name=worxlawnandgardenequipment&_oac=1'
@@ -192,7 +193,7 @@ def paginationReply(url2):
             pass           
             # print(ex)
                   
-        print(f"Количество страниц пагинации: {lastPagin}")
+        # print(f"Количество страниц пагинации: {lastPagin}")
             # print('exPagin and sec req')           
     except Exception as ex:  
         print(f"pagin:  {ex}")
@@ -213,7 +214,11 @@ def paginationReply(url2):
 async def linkerCapturerEbay(itemsCount): 
     global hrefsBankVar
     global ur
-    countLincerCapturer = 0   
+    global flag
+    flag = False
+    countLincerCapturer = 0 
+    countLincerCapturer2 = 0
+    cycleControl = 0  
     
     agrForEbey = 'ebay.com'
     while(True):
@@ -247,23 +252,36 @@ async def linkerCapturerEbay(itemsCount):
                 hrefs = soup.find_all('a', class_='s-item__link')            
                 for item in hrefs:
                     if item is None:
+                        cycleControl +=1
+                        if cycleControl == 180:
+                            countLincerCapturer +=1
+                            if countLincerCapturer >1:
+                                return
+                            else:                                
+                                flag = True
+                                break
                         continue 
                     else:
                         hrefsBankVar.append(item.get('href'))      
 
             except:
+                flag = True
                 # print(f'исключение на 226 стр') 
-                pass 
+                # pass 
         except Exception as ex:
-            countLincerCapturer +=1
-            if countLincerCapturer >1:
-                return
-            else:
-                time.slep(random.randrange(1,3))
-                continue           
-            # print(f"linker capturer:  {ex}") 
+            flag = True
+
         finally:
-            return 
+            if flag == False:
+               return 
+            else:
+                countLincerCapturer2 +=1
+                if countLincerCapturer2 >1:
+                    return
+                else:
+                    time.slep(random.randrange(1,3))
+                    continue     
+                
 
 def linksHandlerAmazon(total):
     # print('start Amazon')
@@ -287,12 +305,12 @@ def linksHandlerAmazon(total):
             r = sessionReq(total['linkSrchAmazon'], agrForAmazon)            
             # print(f"ответ Амазона:  {r}")
             if str(r) == '<Response [503]>':
-                print('Желтая карточка от сервера')            
+                print('Желтая карточка от Amazon')            
                 time.sleep(random.randrange(1,7))
                 break
 
             if str(r) == '<Response [403]>':
-                print('Сервер отверг запрос')
+                print('Amazon отверг запрос')
 
                 time.sleep(random.randrange(1,7))
                 break
@@ -576,8 +594,9 @@ def linksHandlerAmazon(total):
                 "model": total['model'],                
                 "amazonBlock": resultProto,                               
             })
-            return finResult
+            # print(finResult)
             # print('yes')
+            return finResult
  
 # //////////////////////////////////////////////////////////////////
 
@@ -804,6 +823,7 @@ def hendlerLinks(link):
         # print(f" error str 443:  {ex}")
         pass     
     finally:
+        # print(result[0])
         if result[0] is None:        
             pass 
         else:
@@ -817,9 +837,7 @@ async def gather_registrator_eBay(lastPagin):
         tasks = [] 
         for i in range(1, lastPagin+1):
             task = asyncio.create_task(linkerCapturerEbay(i))
-            tasks.append(task)        
-            # tasks.append(task)
-            # time.sleep(random.randrange(1,4))
+            tasks.append(task)
         await asyncio.gather(*tasks)    
     gather_Linker_Ebay(hrefsBankVar)
     hrefsBankVar = []
@@ -831,14 +849,14 @@ def gather_Linker_Ebay(hrefsBank):
     print(f"Количество ссылок для обработки: {len(hrefsBank)}")
     global finResult    
         
-    with multiprocessing.Pool(multiprocessing.cpu_count() * 5) as p2: 
+    with multiprocessing.Pool(multiprocessing.cpu_count()) as p2:                     
+        # p2.map_async(hendlerLinks, hrefsBank[0:10], callback=linksHandlerAmazon)
         for href in hrefsBank:      
             p2.apply_async(hendlerLinks, args=(href, ), callback=linksHandlerAmazon)
         p2.close()
         # p2.terminate()
         p2.join() 
-    
-    # print('linker ebay okey Amazon okey, start writerr')
+
     writerr(finResult) 
     hrefsBank = [] 
         
@@ -941,6 +959,7 @@ def writerr(total):
        test_values[i] = [item['urlEbayItem'], item['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonBlock']]
     gs.updateRangeValues(test_range, test_values) 
     total = []
+    finResult = []
 # # /////////////////////////////   
 # # писатель результатов финиш 
 
@@ -954,14 +973,16 @@ def main():
     paginationReply(url2)         
     finish_time = time.time() - start_time
     print(f"Общее время работы парсера:  {math.ceil(finish_time)} сек")
-    print(f"Количество мультипроцессов:  {multiprocessing.cpu_count()*5}")
+    print(f"Количество мультипроцессов:  {multiprocessing.cpu_count()}")
     print(f"Общее количество товаров:  {total_count}")
     sys.exit()
     
 if __name__ == "__main__":
     main()
 
-# python eScraperNew.py    
+# python eScraperNew.py
+
+# pip install aiohttp
     
 # pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
