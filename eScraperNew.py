@@ -195,6 +195,10 @@ def paginationReply(url2):
             # print(ex)
                   
         print(f"Количество страниц пагинации: {lastPagin}")
+        try:
+            asyncio.run(gather_registrator_eBay(lastPagin))            
+        except:
+            return
             # print('exPagin and sec req')           
     except Exception as ex:  
         print(f"pagin:  {ex}")
@@ -205,10 +209,7 @@ def paginationReply(url2):
         else:
             paginationReply(url2)
     # finally:
-    try:
-        asyncio.run(gather_registrator_eBay(lastPagin))            
-    except:
-        return
+   
 
 # ///////////////////////////////////////////////////////////////////////////////////
     
