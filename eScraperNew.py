@@ -155,7 +155,7 @@ def sessionReq(url1, shopArg):
     #     r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27), proxies=proxyGenerator())    
     return r
 
-def paginationReply(url): 
+def paginationReply(url):    
     paginController = 0   
     lastPagin = 0
     agrForEbey = 'ebay.com' 
@@ -195,13 +195,7 @@ def paginationReply(url):
         except Exception as ex: 
             pass           
             # print(ex)
-                  
-        print(f"Количество страниц пагинации: {lastPagin}")
-        # try:
-
-        # except:
-        #     return
-            # print('exPagin and sec req')           
+           
     except Exception as ex:  
         print(f"pagin:  {ex}")
         paginController +=1
@@ -211,7 +205,33 @@ def paginationReply(url):
         else:
             paginationReply(url)
             
-    hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))
+    print(f"Количество страниц пагинации: {lastPagin}")        
+    paginLimit = input('Введите лимит пагинации (через дефис, например: 10-20) или введите Enter(значение по умолчанию)', )
+    if paginLimit == '' or paginLimit == ' ':
+        hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1)) 
+    else:
+        try:
+            startPagin = int((paginLimit.strip()).replace(' ', '').split('-')[0])
+            finPagin = int((paginLimit.strip()).replace(' ', '').split('-')[1])
+            print(startPagin)
+            print(finPagin)  
+        except:
+            paginLimit = input('Пожалуйста, введите лимит на пагинацию еще раз:', )
+            try:
+                startPagin = int((paginLimit.strip()).replace(' ', '').split('-')[0])
+                finPagin = int((paginLimit.strip()).replace(' ', '').split('-')[1])
+                print(startPagin)
+                print(finPagin)
+            except:
+                print('Программа вынуждена завершить работу(') 
+                sys.exit() 
+        if lastPagin < finPagin:
+            hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))
+        elif lastPagin > finPagin:
+            hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(startPagin, finPagin+1))
+        if lastPagin == finPagin:
+            hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))          
+    
     asyncio.run(gather_registrator_eBay(hrefsBlockPagination))            
     # finally:
    
@@ -1001,6 +1021,7 @@ def writerr(total):
 def reciveInput():
     global list_name
     global start_time
+
     url = input('Введите адрес магазина', )
     # list_name = input('Создайте и введите название страницы Гугл Таблицы', )
         
