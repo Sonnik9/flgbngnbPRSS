@@ -1,11 +1,12 @@
-from __future__ import print_function
-from google.auth.transport.requests import Request
-import os.path
-import pickle
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
+# from __future__ import print_function
+# from google.auth.transport.requests import Request
+# import os.path
+# import pickle
+# from googleapiclient.discovery import build
+# from google_auth_oauthlib.flow import InstalledAppFlow
+# from google.auth.transport.requests import Request
+# from google.oauth2.credentials import Credentials
+
 from requests_html import HTMLSession
 import requests
 from bs4 import BeautifulSoup
@@ -36,6 +37,7 @@ uagent = UserAgent()
 itemsCount = 0 
 agrForAmazon = 'amazon.com'
 agrForEbey = 'ebay.com'
+# start_time = ''
 # adderLink = '&_ipg=240&_pgn=1'
 total_count = 0 
 # ress = []
@@ -195,11 +197,10 @@ def paginationReply(url):
             # print(ex)
                   
         print(f"Количество страниц пагинации: {lastPagin}")
-        try:
-            hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))
-            asyncio.run(gather_registrator_eBay(hrefsBlockPagination))            
-        except:
-            return
+        # try:
+
+        # except:
+        #     return
             # print('exPagin and sec req')           
     except Exception as ex:  
         print(f"pagin:  {ex}")
@@ -209,6 +210,9 @@ def paginationReply(url):
             return
         else:
             paginationReply(url)
+            
+    hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))
+    asyncio.run(gather_registrator_eBay(hrefsBlockPagination))            
     # finally:
    
 
@@ -217,13 +221,14 @@ def paginationReply(url):
 async def linkerCapturerEbay(href): 
     global hrefsBankVar    
     global flag
-    flag = False
-    countLincerCapturer = 0 
-    countLincerCapturer2 = 0
-    cycleControl = 0  
+
     
     agrForEbey = 'ebay.com'
     while(True):
+        flag = False
+        countLincerCapturer = 0 
+        countLincerCapturer2 = 0
+        cycleControl = 0  
         try:            
             r = sessionReq(href, agrForEbey)
             # print(f"linker response:  {r}") 
@@ -273,22 +278,24 @@ async def linkerCapturerEbay(href):
         except Exception as ex:
             flag = True
 
-        finally:
-            if flag == False:
-               return 
+        # finally:
+        if flag == False:
+            return 
+        else:
+            countLincerCapturer2 +=1
+            if countLincerCapturer2 >1:
+                print('Не удалось собрать нужное количество ссылок')
+                return
             else:
-                countLincerCapturer2 +=1
-                if countLincerCapturer2 >1:
-                    print('Не удалось собрать нужное количество ссылок')
-                    return
-                else:
-                    time.slep(random.randrange(1,3))
-                    continue     
+                time.slep(random.randrange(1,3))
+                continue     
                 
 
 def linksHandlerAmazon(total):
     # print('start Amazon')
     # global finResult
+    if total is None:
+        return
     try:
         model = total['model'].lower()
     except:
@@ -311,38 +318,38 @@ def linksHandlerAmazon(total):
             if str(r) == '<Response [503]>':
                 print('Желтая карточка от Amazon')            
                 # time.sleep(random.randrange(1,4))
-                break
+                return
 
             if str(r) == '<Response [403]>':
                 print('Amazon отверг запрос')
 
-                time.sleep(random.randrange(1,5))
-                break
+                # time.sleep(random.randrange(1,5))
+                return
 
             if str(r) == '<Response [504]>':
-                break  
+                return  
             if str(r) == '<Response [404]>':
                 print('Страница не найдена')
-                break 
+                return 
             if str(r) == '<Response [400]>':
-                break 
+                return 
             if str(r) == '<Response [443]>':
                 print('Проблемы с подключениемю. Проверьте интернет соединение')
-                time.sleep(random.randrange(1,5))
+                # time.sleep(random.randrange(1,5))
                 counterExceptions +=1
                 if counterExceptions >1:
-                    break
+                    return
                 else:                    
                    continue 
                
         except Exception as ex:
-            break
+            return
         try:
             soup = BeautifulSoup(r.content, "html.parser")
             soup2 = BeautifulSoup(r.text, "lxml")
             dom = etree.HTML(str(soup)) 
         except:
-            break
+            return
         try:                   
             gf = dom.xpath('//*[@id="search"]/span/div/h1/div/div[1]/div/div/span[1]//text()')[0] 
             # print(gf)            
@@ -356,12 +363,12 @@ def linksHandlerAmazon(total):
                         quanityTargetItems = int(gf.split(' ')[0].split('-')[1])                                           
                     except Exception as ex:
                         print(f"что-то не так с quanityTargetItems Amazon{ex}")
-                        break
+                        return
         # print(quanityTargetItems)
         
         except Exception as ex:
             # print(f" str 616  {ex}")
-            break
+            return
             # return
 
         
@@ -578,7 +585,7 @@ def linksHandlerAmazon(total):
                 if flagEx1 == True:         
                     counterRetry += 1
                     if counterRetry > 1:
-                        break
+                        return
                     else:
                         time.slep(random.randrange(1,4))
                         continue   
@@ -600,7 +607,10 @@ def linksHandlerAmazon(total):
             })
             # print(finResult)
             # print('yes')
-            return finResult[0]
+            try:
+                return finResult[0]
+            except:
+                return
  
 # //////////////////////////////////////////////////////////////////
 
@@ -616,17 +626,15 @@ def hendlerLinks(link):
         r = sessionReq(link, agrForEbey)          
         # print(f"ответ обработчика ссілок Ебей:  {r}")
         if str(r) == '<Response [503]>':
-            try:
-                time.sleep(random.randrange(1,5))
-                return
-            except:
-                pass
+            
+            # time.sleep(random.randrange(1,5))
+            return
+
         if str(r) == '<Response [403]>':
-            try:
-                time.sleep(random.randrange(1,7))
-                return
-            except:
-                pass
+            
+            # time.sleep(random.randrange(1,7))
+            return
+
         if str(r) == '<Response [504]>':
             return  
         if str(r) == '<Response [404]>':
@@ -828,10 +836,13 @@ def hendlerLinks(link):
         pass     
     finally:
         # print(result[0])
-        if result[0] is None:        
-            pass 
-        else:
-            return linksHandlerAmazon(result[0])
+        # if result[0] is None:        
+        #     return 
+        # else:
+        try: 
+           return linksHandlerAmazon(result[0])
+        except:
+            return
 
 # //////////////////////////////////////////////////////////////////////
 
@@ -842,18 +853,24 @@ async def gather_registrator_eBay(hrefsBlockPagination):
         for href in hrefsBlockPagination:
             task = asyncio.create_task(linkerCapturerEbay(href))
             tasks.append(task)
-        await asyncio.gather(*tasks)    
+        await asyncio.gather(*tasks) 
+      
     gather_Linker_Ebay(hrefsBankVar)
     hrefsBankVar = []
 
 # /////////////////////////////////////////////////////////////////////////////
 def gather_Linker_Ebay(hrefsBank):
+    global start_time
     print(f"Количество ссылок для обработки: {len(hrefsBank)}")
+    hrefsBank = list(filter(None, hrefsBank))
+    prepTime = time.time() - start_time 
+    print(f"Prep time:  {prepTime}")
     # n = multiprocessing.cpu_count() * 10  
     n = 21
     # 21 для моего  # 
     with WorkerPool(n_jobs = n) as p2:                      
-        finRes = p2.map(hendlerLinks, hrefsBank[0:20])
+        finRes = p2.map(hendlerLinks, hrefsBank)
+        print(len(finRes))
         writerr(finRes) 
         hrefsBank = [] 
         finRes = []
@@ -870,45 +887,45 @@ def gather_Linker_Ebay(hrefsBank):
 # писатель результатов старт
 
 
-class GoogleSheet:
-    SPREADSHEET_ID = '1E8ApONqNaH9EXH8eeyOssTC2RNDRFyZ7njVucOnRNPs'
-    SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-    service = None
+# class GoogleSheet:
+#     SPREADSHEET_ID = '1E8ApONqNaH9EXH8eeyOssTC2RNDRFyZ7njVucOnRNPs'
+#     SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+#     service = None
 
-    def __init__(self):
-        creds = None
-        if os.path.exists('token.pickle'):
-            with open('token.pickle', 'rb') as token:
-                creds = pickle.load(token)
+#     def __init__(self):
+#         creds = None
+#         if os.path.exists('token.pickle'):
+#             with open('token.pickle', 'rb') as token:
+#                 creds = pickle.load(token)
 
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:                
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', self.SCOPES)
-                creds = flow.run_local_server(port=0)
-            with open('token.pickle', 'wb') as token:
-                pickle.dump(creds, token)
+#         if not creds or not creds.valid:
+#             if creds and creds.expired and creds.refresh_token:
+#                 creds.refresh(Request())
+#             else:                
+#                 flow = InstalledAppFlow.from_client_secrets_file(
+#                     'credentials.json', self.SCOPES)
+#                 creds = flow.run_local_server(port=0)
+#             with open('token.pickle', 'wb') as token:
+#                 pickle.dump(creds, token)
 
-        self.service = build('sheets', 'v4', credentials=creds)
+#         self.service = build('sheets', 'v4', credentials=creds)
 
-    def updateRangeValues(self, range, values):
-        data = [{
-            'range': range,
-            'values': values
-        }]
-        body = {
-            'valueInputOption': 'USER_ENTERED',
-            'data': data
-        }
-        result = self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.SPREADSHEET_ID, body=body).execute()        
+#     def updateRangeValues(self, range, values):
+#         data = [{
+#             'range': range,
+#             'values': values
+#         }]
+#         body = {
+#             'valueInputOption': 'USER_ENTERED',
+#             'data': data
+#         }
+#         result = self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.SPREADSHEET_ID, body=body).execute()        
 
 def writerr(total):
     print('Запись результатов')
     global total_count
-    global list_name    
-    gs = GoogleSheet()   
+    # global list_name    
+    # gs = GoogleSheet()   
     
     total = list(filter(None, total)) 
     total = list(filter(lambda item: item['amazonBlock'] != [], total))
@@ -917,7 +934,9 @@ def writerr(total):
     for item in total:
         item['amazonBlock'] = list(filter(lambda it: it['asin'] != '', item['amazonBlock']))
     for item in total:
-        amazonList = ''
+        amazonLink = ''
+        amazonPrice = ''
+        amazonAsin = ''
         if len(item['amazonBlock']) > 1:
             item['amazonBlockNew'] = list(filter(lambda it: it['titleCritery'] != '', item['amazonBlock']))
             if len(item['amazonBlockNew']) == 0:
@@ -928,17 +947,27 @@ def writerr(total):
       
         for it in item['amazonBlock']:
             if len(item['amazonBlock']) == 0:
-                item['amazonLink'] = it['targetLink'] + '\n'
-                item['amazonPrice'] = it['targetPrice'] + '\n'
-                item['amazonAsin'] = it['asin'] + '\n'
+                try:
+                    amazonLink = it['targetLink'] + '\n'
+                    amazonPrice = it['targetPrice'] + '\n'
+                    amazonAsin = it['asin'] + '\n'
+                except:
+                    pass
                 break
             else:
-                item['amazonLink'] += it['targetLink'] + '\n'
-                item['amazonPrice'] += it['targetPrice'] + '\n'
-                item['amazonAsin'] += it['asin'] + '\n'                
-                           
+                try:
+                    amazonLink += it['targetLink'] + '\n'
+                    amazonPrice += it['targetPrice'] + '\n'
+                    amazonAsin += it['asin'] + '\n'
+                except:
+                    pass
+        item['amazonLink'] = amazonLink
+        item['amazonPrice'] = amazonPrice
+        item['amazonAsin'] = amazonAsin
+                                
+        del item['amazonBlock']                   
         
-    total = list(filter(lambda item: item['amazonBlock'] != [], total))    
+    # total = list(filter(lambda item: item['amazonBlock'] != [], total))    
     total_count = len(total) 
     now = datetime.now() 
     curentTimeForFile = now.strftime("%m_%d_%Y__%H_%M")     
@@ -952,14 +981,14 @@ def writerr(total):
         for item in total:
             writer.writerow([item['urlEbayItem'], item ['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonLink'], item['amazonPrice'], item['amazonAsin']])      
     time.sleep(1)
-    with open(f'Result_{curentTimeForFile}.json', encoding="utf-8") as file: 
-        total = json.load(file)
+    # with open(f'Result_{curentTimeForFile}.json', encoding="utf-8") as file: 
+    #     total = json.load(file)
 
-    test_range = f'{list_name}!A2:J{len(total)+1}'   
-    test_values = [[] for i in range(0,len(total))]
-    for i, item in enumerate(total):
-       test_values[i] = [item['urlEbayItem'], item['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonLink'], item['amazonPrice'], item['amazonAsin']]
-    gs.updateRangeValues(test_range, test_values) 
+    # test_range = f'{list_name}!A2:J{len(total)+1}'   
+    # test_values = [[] for i in range(0,len(total))]
+    # for i, item in enumerate(total):
+    #    test_values[i] = [item['urlEbayItem'], item['title'], item['price'], item['quanity'], item['delivery'], item['brand'], item['model'], item['amazonLink'], item['amazonPrice'], item['amazonAsin']]
+    # gs.updateRangeValues(test_range, test_values) 
     if len(total) == 0:
         print('Упс! Что-то пошло не так...')
     total = []
@@ -971,8 +1000,11 @@ def writerr(total):
 
 def reciveInput():
     global list_name
+    global start_time
     url = input('Введите адрес магазина', )
     # list_name = input('Создайте и введите название страницы Гугл Таблицы', )
+        
+    start_time = time.time()
     print('Старт...') 
     paginationReply(url)
     
@@ -983,7 +1015,8 @@ def reciveInput():
 
 def main():
     global total_count
-    start_time = time.time()
+    global start_time
+    
     reciveInput()            
     finish_time = time.time() - start_time
     print(f"Общее время работы парсера:  {math.ceil(finish_time)} сек")
@@ -999,4 +1032,10 @@ if __name__ == "__main__":
 # pip install aiohttp
 # pip install mpire    
 # pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+
+# ur = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=worxtools&store_cat=0&store_name=worxlawnandgardenequipment&_oac=1'
+# url = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=worxtools&store_cat=0&store_name=worxlawnandgardenequipment&_oac=1'
+
+
 
