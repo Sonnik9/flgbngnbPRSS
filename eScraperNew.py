@@ -155,8 +155,11 @@ def sessionReq(url1, shopArg):
     #     r = session.get(url1, headers=random_headers(shopArg), timeout=(19, 27), proxies=proxyGenerator())    
     return r
 
-def paginationReply(url):    
-    paginController = 0   
+def paginationReply(url):
+    global start_time    
+    paginController = 0
+    flagPagin = False 
+    # paginLimit = ''  
     lastPagin = 0
     agrForEbey = 'ebay.com' 
          
@@ -205,35 +208,50 @@ def paginationReply(url):
         else:
             paginationReply(url)
             
-    print(f"Количество страниц пагинации: {lastPagin}")        
+    print(f"Всего в магазине страниц пагинации: {lastPagin}")        
     paginLimit = input('Введите лимит пагинации (через дефис, например: 10-20) или введите Enter(значение по умолчанию)', )
     if paginLimit == '' or paginLimit == ' ':
-        hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1)) 
+        hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))
+        start_time = time.time()  
+        asyncio.run(gather_registrator_eBay(hrefsBlockPagination))
+        return    
     else:
+        
         try:
             startPagin = int((paginLimit.strip()).replace(' ', '').split('-')[0])
             finPagin = int((paginLimit.strip()).replace(' ', '').split('-')[1])
-            print(startPagin)
-            print(finPagin)  
+            # print(startPagin)
+            # print(finPagin)  
         except:
             paginLimit = input('Пожалуйста, введите лимит на пагинацию еще раз:', )
             try:
                 startPagin = int((paginLimit.strip()).replace(' ', '').split('-')[0])
                 finPagin = int((paginLimit.strip()).replace(' ', '').split('-')[1])
-                print(startPagin)
-                print(finPagin)
+                # print(startPagin)
+                # print(finPagin)
             except:
                 print('Программа вынуждена завершить работу(') 
                 sys.exit() 
-        if lastPagin < finPagin:
+        if startPagin > finPagin:
+            flagPagin = True
+            paginLimit = input('Пожалуйста, введите лимит на пагинацию еще раз:', )
+            try:
+                startPagin = int((paginLimit.strip()).replace(' ', '').split('-')[0])
+                finPagin = int((paginLimit.strip()).replace(' ', '').split('-')[1])
+                # print(startPagin)
+                # print(finPagin)  
+            except:
+                print('Программа вынуждена завершить работу(') 
+                sys.exit()  
+        elif lastPagin < finPagin and flagPagin == False:
             hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))
         elif lastPagin > finPagin:
             hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(startPagin, finPagin+1))
-        if lastPagin == finPagin:
-            hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))          
-    
+        elif lastPagin == finPagin:
+            hrefsBlockPagination = list(f"{url}&_ipg=240&_pgn={i}" for i in range(1, lastPagin+1))
+
+    start_time = time.time()  
     asyncio.run(gather_registrator_eBay(hrefsBlockPagination))            
-    # finally:
    
 
 # ///////////////////////////////////////////////////////////////////////////////////
@@ -880,11 +898,11 @@ async def gather_registrator_eBay(hrefsBlockPagination):
 
 # /////////////////////////////////////////////////////////////////////////////
 def gather_Linker_Ebay(hrefsBank):
-    global start_time
+    # global start_time
     print(f"Количество ссылок для обработки: {len(hrefsBank)}")
     hrefsBank = list(filter(None, hrefsBank))
-    prepTime = time.time() - start_time 
-    print(f"Prep time:  {prepTime}")
+    # prepTime = time.time() - start_time 
+    # print(f"Prep time:  {prepTime}")
     # n = multiprocessing.cpu_count() * 10  
     n = 21
     # 21 для моего  # 
@@ -1020,12 +1038,8 @@ def writerr(total):
 
 def reciveInput():
     global list_name
-    global start_time
-
     url = input('Введите адрес магазина', )
-    # list_name = input('Создайте и введите название страницы Гугл Таблицы', )
-        
-    start_time = time.time()
+    # list_name = input('Создайте и введите название страницы Гугл Таблицы', )   
     print('Старт...') 
     paginationReply(url)
     
@@ -1048,11 +1062,16 @@ def main():
 if __name__ == "__main__":
     main()
 
-# python eScraperNew.py
+# python eScraperNew.py 
+ 
 
 # pip install aiohttp
 # pip install mpire    
 # pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+# если не получается запушить
+# git config --global push.autoSetupRemote true
+# git push
 
 
 # ur = 'https://www.ebay.com/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=worxtools&store_cat=0&store_name=worxlawnandgardenequipment&_oac=1'
